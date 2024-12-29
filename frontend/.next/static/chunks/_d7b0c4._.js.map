@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file://H%3A/crimeDB/frontend/crimedb/src/app/logout/page.tsx"],"sourcesContent":["\"use client\"\r\nimport React, { useState ,useEffect} from \"react\";\r\nimport {useRouter} from \"next/navigation\";\r\nimport toast from \"react-hot-toast\";\r\nconst Logout=()=>{\r\n    const router=useRouter()\r\n    useEffect(()=>{\r\n        const lout=async()=>{\r\n        try{\r\n            const res = await fetch(`${process.env.NEXT_PUBLIC_BHOST}/logout`,{\r\n            credentials: 'include'\r\n        })\r\n        toast.success(\"Logged out SuccessFully\")\r\n        router.push('/')\r\n        }\r\n        catch(error){\r\n            toast.error(\"Logout Failed\")\r\n        }    \r\n    }\r\n        lout();\r\n    },[])\r\n}\r\nexport default Logout;"],"names":[],"mappings":";;;AACA;AACA;AACA;AAMuC;;AATvC;;;;AAIA,MAAM,SAAO;;IACT,MAAM,SAAO,CAAA,GAAA,qIAAA,CAAA,YAAS,AAAD;IACrB,CAAA,GAAA,6JAAA,CAAA,YAAS,AAAD;4BAAE;YACN,MAAM;yCAAK;oBACX,IAAG;wBACC,MAAM,MAAM,MAAM,MAAM,6DAAiC,OAAO,CAAC,EAAC;4BAClE,aAAa;wBACjB;wBACA,0JAAA,CAAA,UAAK,CAAC,OAAO,CAAC;wBACd,OAAO,IAAI,CAAC;oBACZ,EACA,OAAM,OAAM;wBACR,0JAAA,CAAA,UAAK,CAAC,KAAK,CAAC;oBAChB;gBACJ;;YACI;QACJ;2BAAE,EAAE;AACR;GAjBM;;QACW,qIAAA,CAAA,YAAS;;;KADpB;uCAkBS"}},
+    {"offset": {"line": 53, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}},
+    {"offset": {"line": 63, "column": 0}, "map": {"version":3,"sources":["file://H%3A/crimeDB/frontend/crimedb/node_modules/next/navigation.js"],"sourcesContent":["module.exports = require('./dist/client/components/navigation')\n"],"names":[],"mappings":"AAAA,OAAO,OAAO","ignoreList":[0]}},
+    {"offset": {"line": 64, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}
