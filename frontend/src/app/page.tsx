@@ -186,7 +186,7 @@ const HomePage = () => {
                       {applicant.status}
                     </span>
                     <span className="text-xs text-gray-500">{applicant.phone}</span>
-                    <span className="text-xs text-gray-500">{applicant.email}</span>
+                    {/* <span className="text-xs text-gray-500">{applicant.email}</span> */}
                   </div>
                 </div>
                 <span className="text-sm text-gray-500">{formatDate(applicant.created_at)}</span>
