@@ -1,0 +1,26 @@
+service: crime-db-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    supaUri: ${env:supaUri}
+    JWT_SECRET: ${env:JWT_SECRET}
+
+functions:
+  app:
+    handler: app.handler
+    timeout: 20
+    events:
+      - http:
+          path: /
+          method: ANY
+      - http:
+          path: /{proxy+}
+          method: ANY
+plugins:
+  - serverless-offline
+custom:
+  serverless-offline:
+    httpPort: 4000

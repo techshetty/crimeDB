@@ -1,6 +1,7 @@
 const express = require("express")
 const cors=require("cors")
 const {Client} = require('pg'); 
+const serverless = require('serverless-http');
 require('dotenv').config()
 const cookieParser=require('cookie-parser');
 const app=express();
@@ -10,13 +11,29 @@ const port=process.env.PORT
 const jwt=require('jsonwebtoken');
 const bcrypt=require('bcryptjs')
 const dburl=process.env.supaUri
-app.use(cors({origin: ["http://localhost:3000","http://192.168.152.166"],credentials: true}))
-const pgclient = new Client({
-    connectionString: dburl,
-  });
-pgclient.connect().then(()=>{
-    console.log("Connected to PGSQL Database")
-}).catch(err=>{console.log(err.stack)})
+app.use(cors({origin: ["http://localhost:3000","http://192.168.152.166","https://crimedb.netlify.app"],credentials: true}))
+app.use(async (req, res, next) => {
+    pgclient = new Client({ connectionString: dburl });
+    try {
+        await pgclient.connect();
+        console.log("Connected to PostgreSQL");
+        next();
+    } catch (error) {
+        console.error("Failed to connect to PostgreSQL:", error);
+        res.status(500).json({ success: false, error: "Database connection failed" });
+    }
+});
+
+// Middleware to close the database connection
+app.use(async (req, res, next) => {
+    res.on('finish', async () => {
+        if (pgclient) {
+            await pgclient.end();
+            console.log("Disconnected from PostgreSQL");
+        }
+    });
+    next();
+});
 app.get("/",(req,res)=>{
     res.send("CrimeDB API is running.....")
 })
@@ -29,11 +46,13 @@ app.get('/stats',async(req,res)=>{
     const ret= await pgclient.query('SELECT * from applicant where created_at::date=$1::date',[curDate])||[]
     const retc= await pgclient.query('SELECT * from criminals where created_at::date=$1::date',[curDate])||[]
     const ru= await pgclient.query('SELECT * from applicant where created_at::date=$1::date',[curDate])||[]
+    const rms = await pgclient.query('SELECT * from applicant')||[]
     const t=[
         { label: 'Total Records', value: tr.rows.length },
         { label: 'Active Cases', value: ac.rows.length },
         { label: 'Records Added Today', value: ret.rows.length+retc.rows.length },
         { label: 'Recent Updates', value: ru.rows.length+retc.rows.length},
+        { label: 'recent Applicants', value: rms.rows}
       ];
       return res.status(200).json({success:true,data:t})}
       catch(error){
@@ -60,7 +79,8 @@ app.post('/register',async(req,res)=>{
     const token = jwt.sign({username},JWT_SECRET,{expiresIn:"2h"})
     res.cookie('token', token, {
             httpOnly: true,
-            expires: false,
+            secure: true,
+            sameSite: 'None',
             maxAge: 48*60*60*1000
           });
     return res.status(200).json({
@@ -83,7 +103,8 @@ app.post('/login',async(req,res)=>{
         const token = jwt.sign({username,password},JWT_SECRET,{expiresIn:"2h"})
     res.cookie('token', token, {
             httpOnly: true,
-            expires: false,
+            sameSite: 'None',
+            secure: true,
             maxAge: 48*60*60*1000
           });
     return res.status(200).json({
@@ -201,3 +222,4 @@ app.post('/feedback',async(req,res)=>{
         res.status(500).json({message: "Failed to add ccompaint",error:error})
     }
 })
+module.exports.handler = serverless(app);

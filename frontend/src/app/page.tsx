@@ -5,24 +5,53 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Search, UserPlus, MessageSquare, FileText, Shield } from 'lucide-react';
 
+interface Applicant {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  complaint_details: string;
+  status: string;
+  created_at: string;
+}
+
+interface StatItem {
+  label: string;
+  value: number | Applicant[];
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: StatItem[];
+}
+
 const HomePage = () => {
-  const [stats, setStats] = useState([
-    { label: 'Total Records', value: '0' },
-    { label: 'Active Cases', value: '0' },
-    { label: 'Records Added Today', value: '0' },
-    { label: 'Recent Updates', value: '0' },
+  const [stats, setStats] = useState<StatItem[]>([
+    { label: 'Total Records', value: 0 },
+    { label: 'Active Cases', value: 0 },
+    { label: 'Records Added Today', value: 0 },
+    { label: 'Recent Updates', value: 0 },
   ]);
+  const [recentApplicants, setRecentApplicants] = useState<Applicant[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getStats = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_BHOST}/stats`);
-        const rj = await res.json();
-        if (rj.success) {
-          setStats(rj.data);
-          setLoading(false);
+        const data: ApiResponse = await res.json();
+        
+        if (data.success) {
+          // Filter out the recent applicants and set them separately
+          const applicantsData = data.data.find(item => item.label === "recent Applicants");
+          const filteredStats = data.data.filter(item => item.label !== "recent Applicants");
+          
+          setStats(filteredStats);
+          if (applicantsData && Array.isArray(applicantsData.value)) {
+            setRecentApplicants(applicantsData.value);
+          }
         }
+        setLoading(false);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
         setLoading(false);
@@ -58,6 +87,18 @@ const HomePage = () => {
     },
   ];
 
+  const formatDate = (dateString: string): string => {
+    const date:any = new Date(dateString);
+    const now:any = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 24) {
+      return `${diffInHours} hours ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
   if (loading) return <div className="min-h-screen bg-gray-50"></div>;
 
   return (
@@ -80,7 +121,7 @@ const HomePage = () => {
             <Card key={index} className="bg-white">
               <CardContent className="p-6">
                 <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900">{stat.value.toString()}</p>
               </CardContent>
             </Card>
           ))}
@@ -123,19 +164,32 @@ const HomePage = () => {
       <div className="container mx-auto px-6 py-8">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
-            <Button variant="outline" onClick={() => window.location.href = '/activity'}>
+            <h2 className="text-2xl font-bold text-gray-900">Recent Complaints</h2>
+            {/* <Button variant="outline" onClick={() => window.location.href = '/activity'}>
               View All
-            </Button>
+            </Button> */}
           </div>
           <div className="space-y-4">
-            {[...Array(4)].map((_, index) => (
-              <div key={index} className="flex items-center justify-between py-3 border-b last:border-0">
+            {recentApplicants.map((applicant) => (
+              <div key={applicant.id} className="flex items-center justify-between py-3 border-b last:border-0">
                 <div>
-                  <p className="font-medium text-gray-900">Case #{2024001 + index} Updated</p>
-                  <p className="text-sm text-gray-600">Modified by Officer Johnson</p>
+                  <p className="font-medium text-gray-900">
+                    Case #{applicant.id} - {applicant.name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {applicant.complaint_details}
+                  </p>
+                  <div className="flex items-center gap-4 mt-1">
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      applicant.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {applicant.status}
+                    </span>
+                    <span className="text-xs text-gray-500">{applicant.phone}</span>
+                    <span className="text-xs text-gray-500">{applicant.email}</span>
+                  </div>
                 </div>
-                <span className="text-sm text-gray-500">{2+index} hours ago</span>
+                <span className="text-sm text-gray-500">{formatDate(applicant.created_at)}</span>
               </div>
             ))}
           </div>
